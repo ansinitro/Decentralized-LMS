@@ -1,0 +1,41 @@
+import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
+import { Address, toNano,address } from '@ton/core';
+import { Quiz } from '../wrappers/Quiz';
+import '@ton/test-utils';
+
+describe('Quiz', () => {
+    let blockchain: Blockchain;
+    let deployer: SandboxContract<TreasuryContract>;
+    let quiz: SandboxContract<Quiz>;
+
+    beforeEach(async () => {
+        blockchain = await Blockchain.create();
+
+        quiz = blockchain.openContract(await Quiz.fromInit(address("EQAdPvK1WEJk2cmb2LEDIYuwHizRZdVZc_6E5FHOV46NbG6g")));
+
+        deployer = await blockchain.treasury('deployer');
+
+        const deployResult = await quiz.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.05'),
+            },
+            {
+                $$type: 'Deploy',
+                queryId: 0n,
+            }
+        );
+
+        expect(deployResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: quiz.address,
+            deploy: true,
+            success: true,
+        });
+    });
+
+    it('should deploy', async () => {
+        // the check is done inside beforeEach
+        // blockchain and quiz are ready to use
+    });
+});

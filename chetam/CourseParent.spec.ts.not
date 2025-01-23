@@ -1,0 +1,43 @@
+import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
+import { toNano } from '@ton/core';
+import { CourseParent } from '../wrappers/CourseParent';
+import '@ton/test-utils';
+
+describe('CourseParent', () => {
+    let blockchain: Blockchain;
+    let deployer: SandboxContract<TreasuryContract>;
+    let courseParent: SandboxContract<CourseParent>;
+
+    beforeEach(async () => {
+        blockchain = await Blockchain.create();
+
+        courseParent = blockchain.openContract(await CourseParent.fromInit("SRE","Bad Boys", BigInt(3)));
+
+        deployer = await blockchain.treasury('deployer');
+
+        const deployResult = await courseParent.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.05'),
+            },
+            {
+                $$type: 'Deploy',
+                queryId: 0n,
+            }
+        );
+
+        expect(deployResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: courseParent.address,
+            deploy: true,
+            success: true,
+        });
+    console.log(courseParent.address)
+
+    });
+
+    it('should deploy', async () => {
+        // the check is done inside beforeEach
+        // blockchain and courseParent are ready to use
+    });
+});

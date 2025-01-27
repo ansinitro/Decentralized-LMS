@@ -96,7 +96,7 @@ describe('CourseParent', () => {
             },
             {
                 $$type: 'Enrollment',
-                studentIIN: STUDENT_IIN,
+                studentIin: STUDENT_IIN,
             }
         );
 
@@ -119,7 +119,7 @@ describe('CourseParent', () => {
             },
             {
                 $$type: 'Enrollment',
-                studentIIN: STUDENT_IIN,
+                studentIin: STUDENT_IIN,
             }
         );
 
@@ -130,8 +130,8 @@ describe('CourseParent', () => {
 
         expect(await courseParent.getBalance()).toBeGreaterThanOrEqual(course_balance_before + course_cost);
         expect(await courseParent.getStudentsNumber()).toEqual(1n);
-        console.log(fromNano(student_balance_before - (await student.getBalance()) - toNano(3.1)))
-        console.log(blockchain);
+        // console.log(fromNano(student_balance_before - (await student.getBalance()) - toNano(3.1)))
+        // console.log(blockchain);
         // console.log(enrollmentResult.externals[0].body.asSlice().loadStringTail());
     });
 

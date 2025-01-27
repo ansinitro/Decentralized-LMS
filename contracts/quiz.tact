@@ -6,44 +6,64 @@ contract Quiz with Deployable, Ownable {
     override const storageReserve: Int = ton("0.1");
 
     id: Int;
-    course_address: Address;
-    answers: Slice;
+    courseAddress: Address;
     owner: Address;
-    open: Bool = true;
+    isOpen: Bool = true;
 
-    init(id: Int, course_address: Address, answers: Slice) {
+    init(id: Int, courseAddress: Address) {
         self.id = id;
-        self.course_address = course_address;
-        self.answers = answers;
+        self.courseAddress = courseAddress;
         self.owner = context().sender
     }
 
-    receive(msg: Answers) {
-        require(( && self.open) || context().sender == self.owner, "The quize ended");
-        emit(EmitAnswers{sender: context().sender, answers: msg.answers}.toCell());
+    receive(msg: StudentAnswer) {
+        require(self.isOpen || context().sender == self.owner, "The quiz ended");
+                    
+        emit(StudentAnswer{studentIin: msg.studentIin, 
+                                studentAnswers: msg.studentAnswers}.toCell());
 
-        // send(SendParameters{
-        //     to: context().sender,
-        //     value: 0,
-        //     bounce: false,
-        //     mode: SendRemainingValue,
-            // body: percent.toString().asComment(),
-        // });
+        nativeReserve(self.storageReserve, 0);
+        send(SendParameters {
+            to: msg.studentAddress,
+            value: 0,
+            mode: SendRemainingBalance,
+            bounce: false,
+            body: "Your answers for quiz was received".asComment(),
+        });
+    }
+
+    receive(msg: StudentGrade) {
+        self.requireOwner();
+        studentAddress = contractAddress(self.getJettonWalletInit(msg.studentAddress, msg.studentIin));
+
+        send(SendParameters{
+            to: studentAddress,
+            value: 0,
+            mode: SendPayGasSeparately,
+            body: ReturnResult{
+                courseAddress: self.courseAddress,
+                quizId: self.id,
+                percent: msg.studentPercent,
+            }.toCell(),
+        });
+
+        nativeReserve(self.storageReserve, 0);
+        self.notify("Answer Successfully sent".asComment());
     }
 
     receive("Lock") {
         self.requireOwner();
         emit("Lock".asComment());
-        self.open = true;
+        self.isOpen = true;
     }
 
     receive("Unlock") {
         self.requireOwner();
-        self.open = false;
+        self.isOpen = false;
     }
 
-    fun getJettonWalletInit(sender: Address, IIN: String): StateInit {
-        return initOf CourseChild(myAddress(), sender, IIN);
+    fun getJettonWalletInit(sender: Address, iin: String): StateInit {
+        return initOf CourseChild(self.courseAddress, sender, iin);
     }
     
     /////////////////
@@ -53,12 +73,12 @@ contract Quiz with Deployable, Ownable {
         return self.id;
     }
 
-    get fun open(): Int {
+    get fun isOpen(): Int {
         return self.id;
     }
 
-    get fun course_address(): Address {
-        return self.course_address;
+    get fun courseAddress(): Address {
+        return self.courseAddress;
     }
 }
 

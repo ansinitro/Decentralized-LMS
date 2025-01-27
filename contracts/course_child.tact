@@ -2,35 +2,44 @@ import "@stdlib/deploy";
 import "./messages/course_child";
 
 contract CourseChild with Deployable {
-    override const storageReserve: Int = ton("0.1");
+    override const storageReserve: Int = ton("0.2");
 
-    course_address: Address;
+    courseAddress: Address;
     owner: Address;
-    owner_iin: String;
-    is_initialized: Bool = false;
+    // Cell which will save beginParse().saveUint([0-9], 4)....endParse(); 
+    // 12 digit because IIN 12 DIgit 48 bit < 96 bit(string representation)
+    ownerIin: String; 
+    isInitialized: Bool = false;
     
-    init(course_address: Address, owner: Address, owner_iin: String) {
-        // require(sender() == course_address, "not from collection");
-        self.course_address = course_address;
+    init(courseAddress: Address, owner: Address, ownerIin: String) {
+        require(courseAddress == context().sender, "Ty che morosish bratishka");
+        self.courseAddress = courseAddress;
         self.owner = owner;
-        self.owner_iin = owner_iin;
+        self.ownerIin = ownerIin;
     }
 
     receive("Initialize") {
-        require(context().sender == self.course_address, "only parent can initialize");
-        self.is_initialized = true;
+        require(context().sender == self.courseAddress, "only parent can initialize");
+        self.isInitialized = true;
     }
 
-    receive(msg: SendQuiz) {
+    receive(msg: SendAnswer) {
         require(context().sender == self.owner, "not from collection");
-        require(self.is_initialized, "not initialized");
+        require(self.isInitialized, "not initialized");
         send(SendParameters{
             to: msg.quizAddress,
             value: 0,
             bounce: false,
             mode: SendRemainingValue,
-            body: msg.answers,
+            body: StudentAnswer{studentIin: self.ownerIin, 
+                                studentAddress: self.owner, 
+                                studentAnswers: msg.answer}.toCell(),
         });
+    }
+
+    receive(msg: Result) {
+
+        emit(Result{quizId: msg.quizId, percent: msg.percent}.toCell());
     }
 
     // receive(msg: GetAnswers) {
@@ -40,15 +49,15 @@ contract CourseChild with Deployable {
     /////////////////
     //// Getters ////
     /////////////////
-    get fun owner_iin(): String {
-        return self.owner_iin;
+    get fun ownerIin(): String {
+        return self.ownerIin;
     }
 
-    get fun course_address(): Address {
-        return self.course_address;
+    get fun courseAddress(): Address {
+        return self.courseAddress;
     }
 
-    get fun is_initialized(): Bool {
-        return self.is_initialized;
+    get fun isInitialized(): Bool {
+        return self.isInitialized;
     }
 }

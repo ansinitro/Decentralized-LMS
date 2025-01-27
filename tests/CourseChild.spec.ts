@@ -55,7 +55,7 @@ describe('CourseChild', () => {
             },
             {
                 $$type: 'Enrollment',
-                studentIIN: OWNER_IIN,
+                studentIin: OWNER_IIN,
             }
         );
     });

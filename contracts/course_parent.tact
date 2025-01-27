@@ -6,17 +6,18 @@ import "./course_child";
 contract CourseParent with Deployable, Ownable {
     override const storageReserve: Int = ton("0.1");
 
-    id: Int as uint32;
     owner: Address;
+    id: Int as uint32;
     cost: Int as coins = ton("256");
     gasOverhead: Int as uint32 = ton("0.5"); // Configurable gas overhead
     studentsNumber: Int as uint32 = 0;
 
     // Initialize the contract
-    init(id: Int) {
+    init(courseOwner: Address, id: Int) {
         require(id >= 0, "Invalid course ID");
+        require(courseOwner == context().sender,"Ty che morosish bratishka");
+        self.owner = courseOwner;
         self.id = id;
-        self.owner = context().sender;
     }
 
     // Receive a message to update course cost
@@ -37,18 +38,14 @@ contract CourseParent with Deployable, Ownable {
 
     // Handle student enrollment
     receive(msg: Enrollment) {
-        let ton_before = myBalance() - context().value;
+        let tonBefore = myBalance() - context().value;
         let ctx = context();
-
-        // dump(gasConsumed());
-        // now();
-        // dump(gasConsumed());
 
         // Ensure the sender has sent enough funds
         require(ctx.value >= self.cost + self.gasOverhead, "Not enough funds to enroll");
 
         // Get Jetton wallet initialization details
-        let winit: StateInit = self.getJettonWalletInit(ctx.sender, msg.studentIIN);
+        let winit: StateInit = self.getJettonWalletInit(ctx.sender, msg.studentIin);
 
         // Increment the number of students
         self.studentsNumber += 1;
@@ -65,10 +62,10 @@ contract CourseParent with Deployable, Ownable {
         });
 
         // Emit an enrollment event
-        emit(Enrollment{studentIIN: msg.studentIIN}.toCell());
+        emit(EnrollmentEmit{studentIin: msg.studentIin, studentAddress: ctx.sender}.toCell());
 
         // Reserve necessary funds and refund any excess
-        nativeReserve(ton_before + self.storageReserve + self.cost, 0);
+        nativeReserve(tonBefore + self.storageReserve + self.cost, 0);
         send(SendParameters{
             value: 0,
             mode: SendRemainingBalance,
@@ -92,27 +89,27 @@ contract CourseParent with Deployable, Ownable {
     }
 
     // Get Jetton wallet initialization details
-    fun getJettonWalletInit(sender: Address, IIN: String): StateInit {
-        return initOf CourseChild(myAddress(), sender, IIN);
+    fun getJettonWalletInit(sender: Address, iin: String): StateInit {
+        return initOf CourseChild(myAddress(), sender, iin);
     }
 
     /////////////////
     //// Getters ////
     /////////////////
 
-    get fun course_id(): Int {
+    get fun courseId(): Int {
         return self.id;
     }
 
-    get fun course_cost(): Int {
+    get fun courseCost(): Int {
         return self.cost;
     }
 
-    get fun gas_overhead(): Int {
+    get fun gasOverhead(): Int {
         return self.gasOverhead;
     }
 
-    get fun students_number(): Int {
+    get fun studentsNumber(): Int {
         return self.studentsNumber;
     }
 

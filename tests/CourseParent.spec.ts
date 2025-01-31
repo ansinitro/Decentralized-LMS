@@ -21,7 +21,7 @@ describe('CourseParent', () => {
         educator = await blockchain.treasury('educator');
         student = await blockchain.treasury('student');
         courseParent = blockchain
-            .openContract(await CourseParent.fromInit(0n));
+            .openContract(await CourseParent.fromInit(educator.address, 0n));
         // check how it will act if will created the same contratc but by other guy and will the studentCount change?
         const deployResult = await courseParent.send(
             educator.getSender(),
@@ -130,6 +130,7 @@ describe('CourseParent', () => {
 
         expect(await courseParent.getBalance()).toBeGreaterThanOrEqual(course_balance_before + course_cost);
         expect(await courseParent.getStudentsNumber()).toEqual(1n);
+
         // console.log(fromNano(student_balance_before - (await student.getBalance()) - toNano(3.1)))
         // console.log(blockchain);
         // console.log(enrollmentResult.externals[0].body.asSlice().loadStringTail());

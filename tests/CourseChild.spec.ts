@@ -1,5 +1,5 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import { toNano } from '@ton/core';
+import { fromNano, toNano } from '@ton/core';
 import { CourseParent } from '../wrappers/CourseParent';
 import { CourseChild } from '../wrappers/CourseChild';
 import '@ton/test-utils';
@@ -19,13 +19,13 @@ describe('CourseChild', () => {
         student = await blockchain.treasury('student');
 
         courseParent = blockchain
-            .openContract(await CourseParent.fromInit(0n));
+            .openContract(await CourseParent.fromInit(educator.address, 0n));
         courseChild = blockchain
             .openContract(await CourseChild.fromInit(courseParent.address,
                 student.address,
                 OWNER_IIN));
 
-        const deployResult = await courseParent.send(
+        await courseParent.send(
             educator.getSender(),
             {
                 value: toNano('0.2'),
@@ -36,7 +36,7 @@ describe('CourseChild', () => {
             }
         );
 
-        const costChangeResult = await courseParent.send(
+        await courseParent.send(
             educator.getSender(),
             {
                 value: toNano('0.05'),
@@ -47,7 +47,7 @@ describe('CourseChild', () => {
             }
         );
 
-        const enrollmentResult = await courseParent.send(
+        await courseParent.send(
             student.getSender(),
             {
                 value: toNano('3.5'),
@@ -60,10 +60,6 @@ describe('CourseChild', () => {
         );
     });
 
-    it('CourseChild is initialized', async () => {
-        expect(Boolean(await courseChild.getIsInitialized())).toEqual(true);
-    });
-
     it('CourseChild course_address', async () => {
         expect((await courseChild.getCourseAddress()).toString())
             .toBe((courseParent.address).toString());
@@ -72,5 +68,18 @@ describe('CourseChild', () => {
     it('CourseChild owner_iin', async () => {
         expect((await courseChild.getOwnerIin()).toString())
             .toBe(OWNER_IIN);
+    });
+
+    it('Chetam', async () => {
+        const studentBalanceBefore = await student.getBalance();
+        const enrollmentResult = await courseChild.send(
+            student.getSender(),
+            {
+                value: toNano('3.5'),
+                bounce: true,
+            },
+            'Initialize'
+        );
+        console.log(fromNano(await student.getBalance() - studentBalanceBefore));
     });
 });

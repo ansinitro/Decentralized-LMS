@@ -10,7 +10,7 @@ contract Quiz with Deployable, Ownable {
     owner: Address;
     isOpen: Bool = true;
 
-    init(id: Int, courseAddress: Address) {
+    init(courseAddress: Address, id: Int) {
         self.id = id;
         self.courseAddress = courseAddress;
         self.owner = context().sender

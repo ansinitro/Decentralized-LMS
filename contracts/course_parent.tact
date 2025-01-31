@@ -13,10 +13,10 @@ contract CourseParent with Deployable, Ownable {
     studentsNumber: Int as uint32 = 0;
 
     // Initialize the contract
-    init(courseOwner: Address, id: Int) {
+    init(owner: Address, id: Int) {
         require(id >= 0, "Invalid course ID");
-        require(courseOwner == context().sender,"Ty che morosish bratishka");
-        self.owner = courseOwner;
+        require(owner == context().sender,"Ty che morosish bratishka");
+        self.owner = owner;
         self.id = id;
     }
 
@@ -33,7 +33,7 @@ contract CourseParent with Deployable, Ownable {
         self.requireOwner(); // Ensure only the owner can update gas overhead
         require(msg.newGasOverhead > 0, "Gas overhead must be positive");
         self.gasOverhead = msg.newGasOverhead;
-            UpdateGasOverhead{newGasOverhead: msg.newGasOverhead}.toCell();
+        emit(UpdateGasOverhead{newGasOverhead: msg.newGasOverhead}.toCell());
     }
 
     // Handle student enrollment
